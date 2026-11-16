@@ -1,10 +1,10 @@
 # Status Hub for Herdr
 
-A compact Herdr panel with switchable pages for Claude Code usage and Docker container status. The Claude page shows context usage, five-hour and seven-day limits, and reset countdowns. The Docker page groups container cards by Compose project and shows their status. Use the arrows to switch pages; the selection is remembered.
+A compact Herdr panel with switchable pages for Claude Code and Codex usage and Docker container status. The Claude page shows context usage, five-hour and seven-day limits, and reset countdowns. The Codex page uses blue bars for the same usage and reset information. The Docker page groups container cards by Compose project and shows their status. Use the arrows to switch pages; the selection is remembered.
 
 ## Install
 
-Requirements: Herdr Desktop, Bash and `jq`. The Claude page needs Claude Code with a shell status line; the Docker page needs the Docker CLI and access to a local Docker daemon.
+Requirements: Herdr Desktop, Bash, `jq` and Python 3. The Claude page needs Claude Code with a shell status line; the Docker page needs the Docker CLI and access to a local Docker daemon.
 
 1. Clone this repository and copy `herdr/status-hub/mods/status-hub` into `${HERDR_APP_HOME:-~/.config/herdr-app}/mods/status-hub`. If a mod with that name already exists, do not overwrite it without checking its contents.
 2. Run `herdr-app check` on the installed folder.
@@ -19,7 +19,7 @@ Requirements: Herdr Desktop, Bash and `jq`. The Claude page needs Claude Code wi
 
 5. Use Claude Code until its status line updates. The panel displays `stale` if no update arrives for five minutes. Fields not provided by Claude Code appear as `—`.
 
-To update, pull the repository and copy `main.js`, `mod.json`, `capture.sh`, and `VERSION` into the installed mod folder, then run `herdr-app check` again. Back up any personal customizations first.
+To update, pull the repository and copy `main.js`, `mod.json`, `capture.sh`, `codex-usage.py`, and `VERSION` into the installed mod folder, then run `herdr-app check` again. Back up any personal customizations first.
 
 Check the installed version with:
 
@@ -33,8 +33,10 @@ See the [changelog](CHANGELOG.md) for release notes. The version file identifies
 
 The wrapper saves only percentages, reset times and an update timestamp to `data/claude-usage.json` under the Herdr app home. It does not save credentials or conversation content. Multiple Claude sessions share that file: **context is from the most recently updated session**, not necessarily the focused one. The wrapper and Herdr must use the same `HERDR_APP_HOME`.
 
+The Codex page reads token-count events from the 10 most recently modified session files under `${CODEX_HOME:-~/.codex}/sessions`; no extra setup is needed. Context comes from the most recently updated session with usage data, not necessarily the focused one. Values become stale five minutes after that event, and missing values appear as `—`. Only usage and reset data are displayed; the session files themselves can contain conversation content.
+
 The Docker page runs `docker ps -a` locally every five seconds while selected, including while the panel is hidden. It reads container names, status, and Compose project labels; it does not start, stop, or modify containers. Containers without a Compose label appear under Standalone. A green dot means running and not reported unhealthy; it does not guarantee a health check. Docker errors show as unavailable. Remote Docker hosts are not supported.
 
 ## Checks
 
-Run `node herdr/status-hub/test.mjs` from the repository root, then `herdr-app check herdr/status-hub/mods/status-hub`.
+Run `node herdr/status-hub/test.mjs` and `python3 herdr/status-hub/test_codex_usage.py` from the repository root, then `herdr-app check herdr/status-hub/mods/status-hub`.

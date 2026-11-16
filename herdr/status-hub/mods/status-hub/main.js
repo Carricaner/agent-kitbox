@@ -2,7 +2,7 @@ import { View, div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { appHome, readTextFile, theme, props, layout, run, exec } from "herdr";
 
-const pages = ["Claude Code", "Docker"];
+const pages = ["Claude Code", "Codex", "Docker"];
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -45,6 +45,10 @@ export default class ClaudeUsage extends View {
             return { name, state, status, project };
           }) : [];
           this.dockerError = false;
+        } else if (page === "Codex") {
+          const result = await exec("python3", [`${appHome()}/mods/status-hub/codex-usage.py`], { timeout: 5000 });
+          if (result.code !== 0) throw new Error("Codex unavailable");
+          this.data = JSON.parse(result.stdout);
         } else {
           const text = await readTextFile(`${appHome()}/data/claude-usage.json`);
           this.data = text ? JSON.parse(text) : null;
@@ -72,6 +76,7 @@ export default class ClaudeUsage extends View {
           }).child("Status Hub"));
     }
     const stale = !data || !Number.isFinite(data.updated) || Date.now() / 1000 - data.updated > 300;
+    const blue = this.page === "Codex";
     const bar = (name, value, reset) => {
       const valid = typeof value === "number" && Number.isFinite(value);
       const percent = valid ? Math.max(0, Math.min(100, value)) : 0;
@@ -80,18 +85,20 @@ export default class ClaudeUsage extends View {
         .child(div().w(55).text_color(t.muted).child(name))
         .child(h_flex().gap(2).children(Array.from({ length: 10 }, (_, i) => {
           const scale = i < Math.floor(percent / 10) && !stale ? 1 : 0.3;
-          const color = [75, 128, 48].map((v, c) => Math.round((v + ([150, 255, 96][c] - v) * i / 9) * scale).toString(16).padStart(2, "0")).join("");
+          const start = blue ? [48, 96, 160] : [75, 128, 48], end = blue ? [96, 180, 255] : [150, 255, 96];
+          const color = start.map((v, c) => Math.round((v + (end[c] - v) * i / 9) * scale).toString(16).padStart(2, "0")).join("");
           return div().w(10).h(6).rounded(2).bg(`#${color}`);
         })))
         .child(div().w(32).text_color(t.foreground).child(valid ? `${Math.round(percent)}%` : "—"))
-        .when(Boolean(remaining), el => el.child(div().px(5).py(1).rounded(5).bg("#34452d").text_size(10)
-          .text_color("#b8eda0").child(remaining)));
+        .when(Boolean(remaining), el => el.child(div().px(5).py(1).rounded(5).bg(blue ? "#263e59" : "#34452d").text_size(10)
+          .text_color(blue ? "#a6d5ff" : "#b8eda0").child(remaining)));
     };
     const arrow = (direction, symbol) => div().id(`page-${direction}`).px(6).py(2).rounded(4)
       .text_color(pages.length > 1 ? t.foreground : t.dim)
       .when(pages.length > 1, el => el.cursor_pointer().hover(s => s.bg(t.hover)).on_click((_e, cx) => {
         const index = pages.indexOf(this.page);
         this.page = pages[(index + direction + pages.length) % pages.length];
+        this.data = null;
         localStorage.setItem("page", this.page);
         this.refresh(cx);
         cx.notify();
