@@ -10,11 +10,19 @@ Clone the repository, then copy the mod into Herdr's configuration folder:
 git clone https://github.com/Carricaner/agent-kitbox.git
 cd agent-kitbox
 mkdir -p "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer"
-cp herdr/markdown-viewer/mods/markdown-viewer/{main.js,mod.json} "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer/"
+cp herdr/markdown-viewer/mods/markdown-viewer/{main.js,mod.json,VERSION} "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer/"
 herdr-app check "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer"
 ```
 
 To update, run `git pull` in the cloned repository and repeat the `cp` and `herdr-app check` commands. This replaces the installed mod's code; back up any personal modifications first. Herdr reloads the mod after files are saved, so save any open edits before updating.
+
+Check the installed version with:
+
+```sh
+cat "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer/VERSION"
+```
+
+See the repository's [changelog](../../CHANGELOG.md) for release notes. The version file identifies the copied release; it does not check for updates or detect later local edits.
 
 Open a file beside the focused terminal:
 

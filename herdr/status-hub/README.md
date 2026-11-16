@@ -19,7 +19,15 @@ Requirements: Herdr Desktop, Bash and `jq`. The Claude page needs Claude Code wi
 
 5. Use Claude Code until its status line updates. The panel displays `stale` if no update arrives for five minutes. Fields not provided by Claude Code appear as `—`.
 
-To update, pull the repository and copy `main.js`, `mod.json`, and `capture.sh` into the installed mod folder, then run `herdr-app check` again. Back up any personal customizations first.
+To update, pull the repository and copy `main.js`, `mod.json`, `capture.sh`, and `VERSION` into the installed mod folder, then run `herdr-app check` again. Back up any personal customizations first.
+
+Check the installed version with:
+
+```sh
+cat "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/status-hub/VERSION"
+```
+
+See the [changelog](CHANGELOG.md) for release notes. The version file identifies the copied release; it does not check for updates or detect later local edits.
 
 ## Data and limits
 
