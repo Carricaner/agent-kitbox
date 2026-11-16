@@ -6,6 +6,7 @@ Tools will be organized by platform or type, such as Herdr mods, Claude Code cus
 
 - [Markdown viewer for Herdr](herdr/markdown-viewer/README.md)
 - [Status Hub for Herdr](herdr/status-hub/README.md)
+- [ELI5 output style for Claude Code](claude-code/output-styles/eli5/README.md)
 
 ## License
 
