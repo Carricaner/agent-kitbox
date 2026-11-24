@@ -2,6 +2,13 @@
 
 A compact Herdr panel with switchable pages for Claude Code and Codex usage and Docker container status. The Claude page shows the model, effort, output style, fast mode, current folder, repository, branch and worktree, then context usage, five-hour and seven-day limits, and reset countdowns. The Codex page uses blue bars for the same usage and reset information. The Docker page groups container cards by Compose project and shows their status. Use the arrows to switch pages; the selection is remembered.
 
+<p>
+  <img src="assets/claude-code-page.png" alt="Status Hub on the Claude Code page: session tiles, workspace details and usage bars" width="360">
+  <img src="assets/status-hub-animation.gif" alt="Status Hub animating changed tiles and usage bars" width="360">
+</p>
+
+When a tile's value changes, a white line runs once around its edge. When a usage bar gains or loses a lit segment, each segment's frame lights in turn. Both take 0.5 seconds.
+
 ## Install
 
 Requirements: Herdr Desktop, Bash, `jq` and Python 3. The Claude page needs Claude Code with a shell status line; the Docker page needs the Docker CLI and access to a local Docker daemon.
