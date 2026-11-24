@@ -52,3 +52,19 @@ focus = "../x"; claude.terminal = null;
 claude.refresh(cx); await task;
 assert.equal(claude.data.model, "Latest");
 console.log("Focused Claude session passed");
+
+const timers = [];
+const fx = { timer: { after: (ms, fn) => timers.push([ms, fn]) }, notify() {} };
+const bar = new api.Panel();
+bar.data = { context: 34, five_hour: 50, model: "Opus", branch: "main" };
+bar.watch("a", fx);
+assert.equal(timers.length, 0); // first load never flashes
+bar.data = { context: 39, five_hour: 61, model: "Sonnet", effort: "high", branch: "main" };
+bar.watch("a", fx);
+assert.deepEqual(Object.keys(bar.flashes).sort(), ["5 hours", "MODEL"]); // 34→39 stays at 3 segments; effort appearing is not a change
+bar.data = { context: 90, five_hour: 61, model: "Opus" };
+bar.watch("b", fx);
+assert.equal(bar.flashes.Context, undefined); // switching session never flashes
+for (const [, fn] of timers) fn(fx);
+assert.equal(bar.flashes["5 hours"], undefined);
+console.log("Bar flash passed");

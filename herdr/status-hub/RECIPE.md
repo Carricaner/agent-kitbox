@@ -8,7 +8,7 @@ A theme-colored, bordered panel below the Files or Changes area. Its centered he
 
 ## How it behaves
 
-The Status Hub button toggles the panel and opens the right sidebar when needed. Arrows cycle between Claude Code, Codex and Docker and remember the page. Claude and Codex data older than five minutes is labeled stale. Docker refreshes every five seconds while its page is selected, even when the panel is hidden. An unavailable daemon or empty list shows a message. This mod does not display agent statuses or bind keys.
+The Status Hub button toggles the panel and opens the right sidebar when needed. Arrows cycle between Claude Code, Codex and Docker and remember the page. Claude and Codex data older than five minutes is labeled stale. When a usage bar's lit segment count changes on the same page and session, each segment's white frame lights in turn, then fades. When a tile's value changes, a white line about a quarter of the way round runs once clockwise along its 1px edge, head bright and tail fading into the tile's gray. Both share one motion, 0.5 seconds that starts slow and speeds up, and use native opacity transitions (percentage position transitions do not animate); first loads, missing values and page or session switches do not animate. Docker refreshes every five seconds while its page is selected, even when the panel is hidden. An unavailable daemon or empty list shows a message. This mod does not display agent statuses or bind keys.
 
 ## Built from
 

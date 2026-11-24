@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-11-24
+
+- Flash a usage bar when its number of lit segments changes: each segment's white frame lights in turn, then fades.
+- When a Session or Workspace tile's value changes, a white line runs once around its edge, bright at the head and fading into the tile's gray at the tail.
+- Both animations take 0.5 seconds and start slow, then speed up.
+- First loads, missing values, and page or session switches never animate.
+
 ## 0.3.0 — 2026-11-24
 
 - Add a Session category to the Claude page: model, effort, output style and fast mode as four equal tiles, plus a Workspace category with the current folder, repository, branch and worktree.

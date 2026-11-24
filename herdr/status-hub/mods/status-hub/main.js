@@ -32,6 +32,28 @@ function shortPath(path) {
   return `…/${parts.slice(-2).join("/")}`;
 }
 
+// Lit segments out of 10, or null when the value is missing.
+function level(value) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.floor(Math.max(0, Math.min(100, value)) / 10) : null;
+}
+
+const bars = [["Context", "context"], ["5 hours", "five_hour"], ["7 days", "seven_day"]];
+
+// Bars and tiles share one motion: a 0.5s run that starts slow and speeds up.
+// Piece k of n lights at LAP * sqrt(k / n); a cover then fades in over TAIL so it trails off.
+const LAP = 500, TAIL = 150;
+const lightAt = (k, n) => LAP * Math.sqrt(k / n);
+
+const tiles = {
+  MODEL: data => text(data?.model),
+  EFFORT: data => text(data?.effort),
+  STYLE: data => text(data?.output_style),
+  FAST: data => typeof data?.fast === "boolean" ? (data.fast ? "on" : "off") : "",
+  REPO: data => text(data?.repo),
+  BRANCH: data => text(data?.branch),
+  WORKTREE: data => text(data?.worktree),
+};
+
 export default class ClaudeUsage extends View {
   init(_props, cx) {
     if (props()?.toggle) return;
@@ -78,12 +100,42 @@ export default class ClaudeUsage extends View {
           this.data = current && latest ? { ...current, updated: latest.updated, five_hour: latest.five_hour,
             five_hour_reset: latest.five_hour_reset, seven_day: latest.seven_day, seven_day_reset: latest.seven_day_reset } : latest ?? current;
         }
+        if (page !== "Docker") this.watch(`${page}:${page === "Claude Code" ? this.terminal ?? "" : ""}`, cx);
       } catch {
         if (page === "Docker") this.dockerError = true;
         else this.data = null;
       }
       finally { this.loading = false; if (this.page !== page) this.refresh(cx); cx.notify(); }
     });
+  }
+
+  // Flash a bar when its lit segment count changes, and a tile when its value changes,
+  // within the same page and session. Missing values never flash.
+  watch(key, cx) {
+    const values = Object.fromEntries([
+      ...bars.map(([name, field]) => [name, level(this.data?.[field])]),
+      ...Object.entries(tiles).map(([name, get]) => [name, get(this.data) || null]),
+    ]);
+    if (this.valuesKey === key) for (const [name, after] of Object.entries(values)) {
+      const before = this.values[name];
+      if (before !== null && after !== null && before !== after)
+        this.flash(name, cx, "arm", [[50, "on"], [50 + LAP + TAIL + 100, null]]);
+    }
+    this.values = values;
+    this.valuesKey = key;
+  }
+
+  // Starts at "arm" so the animated pieces exist before "on" transitions them.
+  flash(name, cx, first, steps) {
+    this.flashes ??= {};
+    const token = {};
+    this.flashes[name] = { phase: first, token };
+    const set = phase => cx => {
+      if (this.flashes[name]?.token !== token) return;
+      if (phase) this.flashes[name].phase = phase; else delete this.flashes[name];
+      cx.notify();
+    };
+    for (const [ms, phase] of steps) cx.timer.after(ms, set(phase));
   }
 
   render() {
@@ -112,7 +164,12 @@ export default class ClaudeUsage extends View {
           const scale = i < Math.floor(percent / 10) && !stale ? 1 : 0.3;
           const start = blue ? [48, 96, 160] : [75, 128, 48], end = blue ? [96, 180, 255] : [150, 255, 96];
           const color = start.map((v, c) => Math.round((v + (end[c] - v) * i / 9) * scale).toString(16).padStart(2, "0")).join("");
-          return div().w(14).h(10).rounded(2).bg(`#${color}`);
+          // On a flash each segment's white frame lights in turn, then a background-colored frame covers it.
+          const phase = this.flashes?.[name]?.phase, on = phase === "on", delay = on ? lightAt(i, 10) : 0;
+          const frame = (id, color, duration) => div().id(`flash-${name}-${i}${id}`).absolute().top(-1).left(-1).w(16).h(12)
+            .rounded(3).border_1().border_color(color).opacity(on ? 1 : 0).transition("opacity", { duration: on ? duration : 1, delay });
+          return div().relative().w(14).h(10).rounded(2).bg(`#${color}`)
+            .when(Boolean(phase), el => el.child(frame("", "#ffffff", 1)).child(frame("-tail", t.background, TAIL)));
         })))
         .child(div().w(32).text_color(t.foreground).child(valid ? `${Math.round(percent)}%` : "—"))
         .when(Boolean(remaining), el => el.child(div().px(5).py(1).rounded(5).bg(blue ? "#263e59" : "#34452d").text_size(10)
@@ -133,9 +190,38 @@ export default class ClaudeUsage extends View {
       .child(rule())
       .child(div().text_color(t.muted).text_size(10).font_weight(600).child(label))
       .child(rule());
-    const tile = (label, value) => v_flex().flex_1().min_w(0).gap(3).px(8).py(6).rounded(6).bg(t.raised)
-      .child(div().text_color(t.muted).text_size(9).font_weight(600).child(label))
-      .child(div().truncate().text_color(value ? t.foreground : t.dim).text_size(12).child(value || "—"));
+    // On a change a comet runs once clockwise along the tile's 1px edge. Each edge is cut into
+    // short pieces lit in turn; a tile-gray cover then fades in over each one, so the head is
+    // white and the tail fades into the tile.
+    // Edges stop 4px short of the rounded corners.
+    // ponytail: pieces are a fixed share of each edge, so the comet is faster on wide tiles.
+    const comet = (label, phase) => {
+      const on = phase === "on", sides = [["top", 12], ["right", 4], ["bottom", 12], ["left", 4]];
+      let k = 0;
+      return sides.map(([side, n]) => {
+        const across = side === "top" || side === "bottom";
+        const strip = across ? div().absolute()[side](0).left(4).right(4).h(1) : div().absolute()[side](0).top(4).bottom(4).w(1);
+        const pieces = [];
+        for (let j = 0; j < n; j++, k++) {
+          const at = `${(side === "bottom" || side === "left" ? n - 1 - j : j) * 100 / n}%`, size = `${100 / n + 1}%`; // +1% hides seams
+          const piece = () => across ? div().absolute().top(0).left(at).w(size).h_full() : div().absolute().left(0).top(at).h(size).w_full();
+          const delay = on ? lightAt(k, 32) : 0;
+          pieces.push(piece().id(`comet-${label}-${k}`).bg("#ffffff").opacity(on ? 1 : 0).transition("opacity", { duration: 1, delay }));
+          pieces.push(piece().id(`comet-${label}-${k}-tail`).bg(t.raised).opacity(on ? 1 : 0)
+            .transition("opacity", { duration: on ? TAIL : 1, delay, easing: "ease-in" }));
+        }
+        return strip.children(pieces);
+      });
+    };
+    const tile = label => {
+      const value = tiles[label](data), phase = this.flashes?.[label]?.phase;
+      // The content layer sits 1px in, leaving the edge free for the comet.
+      return div().flex_1().min_w(0).h(46).relative().overflow_hidden().rounded(6).bg(t.raised)
+        .when(Boolean(phase), el => el.children(comet(label, phase)))
+        .child(v_flex().absolute().inset(1).justify_center().gap(3).px(7).rounded(5).bg(t.raised)
+          .child(div().text_color(t.muted).text_size(9).font_weight(600).child(label))
+          .child(div().truncate().text_color(value ? t.foreground : t.dim).text_size(12).child(value || "—")));
+    };
     const docker = this.page === "Docker";
     const groups = new Map();
     for (const container of this.containers ?? []) {
@@ -151,16 +237,16 @@ export default class ClaudeUsage extends View {
         .child(arrow(1, "›")))
       .when(this.page === "Claude Code", el => el.child(section("SESSION"))
         .child(h_flex().gap(6).py(2)
-          .child(tile("MODEL", text(data?.model)))
-          .child(tile("EFFORT", text(data?.effort)))
-          .child(tile("STYLE", text(data?.output_style)))
-          .child(tile("FAST", typeof data?.fast === "boolean" ? (data.fast ? "on" : "off") : "")))
+          .child(tile("MODEL"))
+          .child(tile("EFFORT"))
+          .child(tile("STYLE"))
+          .child(tile("FAST")))
         .child(section("WORKSPACE"))
         .child(div().h(20).flex().items_center().truncate().text_color(t.muted).child(text(data?.cwd) ? shortPath(data.cwd) : "—"))
-        .child(h_flex().gap(6).py(2).child(tile("REPO", text(data?.repo))))
+        .child(h_flex().gap(6).py(2).child(tile("REPO")))
         .child(h_flex().gap(6).py(2)
-          .child(tile("BRANCH", text(data?.branch)))
-          .child(tile("WORKTREE", text(data?.worktree)))))
+          .child(tile("BRANCH"))
+          .child(tile("WORKTREE"))))
       .when(!docker, el => el.child(section("USAGE")).child(bar("Context", data?.context))
         .child(bar("5 hours", data?.five_hour, data?.five_hour_reset))
         .child(bar("7 days", data?.seven_day, data?.seven_day_reset)))
