@@ -1,6 +1,6 @@
 import { View, div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { appHome, readTextFile, theme, props, layout, run, exec } from "herdr";
+import { agents, appHome, readTextFile, theme, props, layout, run, exec } from "herdr";
 
 const pages = ["Claude Code", "Codex", "Docker"];
 
@@ -21,6 +21,17 @@ function countdown(at) {
   return days ? `${days}d ${hours}h` : hours ? `${hours}h ${minutes}m` : minutes ? `${minutes}m` : "<1m";
 }
 
+function text(value) {
+  return typeof value === "string" && value ? value : "";
+}
+
+// ponytail: fixed 40-char cutoff, measure the panel width if paths still clip.
+function shortPath(path) {
+  if (path.length <= 40) return path;
+  const parts = path.split("/").filter(Boolean);
+  return `…/${parts.slice(-2).join("/")}`;
+}
+
 export default class ClaudeUsage extends View {
   init(_props, cx) {
     if (props()?.toggle) return;
@@ -28,7 +39,9 @@ export default class ClaudeUsage extends View {
     this.page = pages.includes(saved) ? saved : pages[0];
     localStorage.setItem("page", this.page);
     this.refresh(cx);
-    cx.timer.every(5000, cx => this.refresh(cx));
+    // Claude reads two small files, so it can follow focus every second; the others stay at 5s.
+    this.ticks = 0;
+    cx.timer.every(1000, cx => { if (this.page === "Claude Code" || ++this.ticks % 5 === 0) this.refresh(cx); });
   }
 
   refresh(cx) {
@@ -50,8 +63,20 @@ export default class ClaudeUsage extends View {
           if (result.code !== 0) throw new Error("Codex unavailable");
           this.data = JSON.parse(result.stdout);
         } else {
-          const text = await readTextFile(`${appHome()}/data/claude-usage.json`);
-          this.data = text ? JSON.parse(text) : null;
+          const read = async name => {
+            const text = await readTextFile(`${appHome()}/data/${name}`);
+            return text ? JSON.parse(text) : null;
+          };
+          const session = id => /^[\w-]+$/.test(id ?? "") ? read(`claude-sessions/${id}.json`).catch(() => null) : null;
+          // Follow the focused agent when it has a session file; otherwise keep the last one.
+          const focus = agents().find(a => a.focused)?.address;
+          let current = await session(focus);
+          if (current) this.terminal = focus;
+          else current = await session(this.terminal);
+          const latest = await read("claude-usage.json");
+          // Rate limits are account-wide, so take them from the newest update of any session.
+          this.data = current && latest ? { ...current, updated: latest.updated, five_hour: latest.five_hour,
+            five_hour_reset: latest.five_hour_reset, seven_day: latest.seven_day, seven_day_reset: latest.seven_day_reset } : latest ?? current;
         }
       } catch {
         if (page === "Docker") this.dockerError = true;
@@ -81,13 +106,13 @@ export default class ClaudeUsage extends View {
       const valid = typeof value === "number" && Number.isFinite(value);
       const percent = valid ? Math.max(0, Math.min(100, value)) : 0;
       const remaining = countdown(reset);
-      return h_flex().h(22).gap(8).items_center()
+      return h_flex().h(26).gap(8).items_center()
         .child(div().w(55).text_color(t.muted).child(name))
         .child(h_flex().gap(2).children(Array.from({ length: 10 }, (_, i) => {
           const scale = i < Math.floor(percent / 10) && !stale ? 1 : 0.3;
           const start = blue ? [48, 96, 160] : [75, 128, 48], end = blue ? [96, 180, 255] : [150, 255, 96];
           const color = start.map((v, c) => Math.round((v + (end[c] - v) * i / 9) * scale).toString(16).padStart(2, "0")).join("");
-          return div().w(10).h(6).rounded(2).bg(`#${color}`);
+          return div().w(14).h(10).rounded(2).bg(`#${color}`);
         })))
         .child(div().w(32).text_color(t.foreground).child(valid ? `${Math.round(percent)}%` : "—"))
         .when(Boolean(remaining), el => el.child(div().px(5).py(1).rounded(5).bg(blue ? "#263e59" : "#34452d").text_size(10)
@@ -108,6 +133,9 @@ export default class ClaudeUsage extends View {
       .child(rule())
       .child(div().text_color(t.muted).text_size(10).font_weight(600).child(label))
       .child(rule());
+    const tile = (label, value) => v_flex().flex_1().min_w(0).gap(3).px(8).py(6).rounded(6).bg(t.raised)
+      .child(div().text_color(t.muted).text_size(9).font_weight(600).child(label))
+      .child(div().truncate().text_color(value ? t.foreground : t.dim).text_size(12).child(value || "—"));
     const docker = this.page === "Docker";
     const groups = new Map();
     for (const container of this.containers ?? []) {
@@ -121,9 +149,18 @@ export default class ClaudeUsage extends View {
         .child(arrow(-1, "‹"))
         .child(div().text_color(t.foreground).child(!docker && stale ? `${this.page} · stale` : this.page))
         .child(arrow(1, "›")))
-      .when(this.page === "Claude Code", el => el.child(section("OUTPUT STYLE"))
-        .child(div().h(22).flex().items_center().truncate().text_color(t.foreground)
-          .child(typeof data?.output_style === "string" && data.output_style ? data.output_style : "—")))
+      .when(this.page === "Claude Code", el => el.child(section("SESSION"))
+        .child(h_flex().gap(6).py(2)
+          .child(tile("MODEL", text(data?.model)))
+          .child(tile("EFFORT", text(data?.effort)))
+          .child(tile("STYLE", text(data?.output_style)))
+          .child(tile("FAST", typeof data?.fast === "boolean" ? (data.fast ? "on" : "off") : "")))
+        .child(section("WORKSPACE"))
+        .child(div().h(20).flex().items_center().truncate().text_color(t.muted).child(text(data?.cwd) ? shortPath(data.cwd) : "—"))
+        .child(h_flex().gap(6).py(2).child(tile("REPO", text(data?.repo))))
+        .child(h_flex().gap(6).py(2)
+          .child(tile("BRANCH", text(data?.branch)))
+          .child(tile("WORKTREE", text(data?.worktree)))))
       .when(!docker, el => el.child(section("USAGE")).child(bar("Context", data?.context))
         .child(bar("5 hours", data?.five_hour, data?.five_hour_reset))
         .child(bar("7 days", data?.seven_day, data?.seven_day_reset)))
