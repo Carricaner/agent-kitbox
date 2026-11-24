@@ -1,6 +1,6 @@
 # Status Hub for Herdr
 
-A compact Herdr panel with switchable pages for Claude Code and Codex usage and Docker container status. The Claude page shows context usage, five-hour and seven-day limits, and reset countdowns. The Codex page uses blue bars for the same usage and reset information. The Docker page groups container cards by Compose project and shows their status. Use the arrows to switch pages; the selection is remembered.
+A compact Herdr panel with switchable pages for Claude Code and Codex usage and Docker container status. The Claude page shows the current output style, then context usage, five-hour and seven-day limits, and reset countdowns. The Codex page uses blue bars for the same usage and reset information. The Docker page groups container cards by Compose project and shows their status. Use the arrows to switch pages; the selection is remembered.
 
 ## Install
 
@@ -31,7 +31,7 @@ See the [changelog](CHANGELOG.md) for release notes. The version file identifies
 
 ## Data and limits
 
-The wrapper saves only percentages, reset times and an update timestamp to `data/claude-usage.json` under the Herdr app home. It does not save credentials or conversation content. Multiple Claude sessions share that file: **context is from the most recently updated session**, not necessarily the focused one. The wrapper and Herdr must use the same `HERDR_APP_HOME`.
+The wrapper saves only percentages, reset times, the output style name and an update timestamp to `data/claude-usage.json` under the Herdr app home. It does not save credentials or conversation content. Multiple Claude sessions share that file: **context is from the most recently updated session**, not necessarily the focused one. The wrapper and Herdr must use the same `HERDR_APP_HOME`.
 
 The Codex page reads token-count events from the 10 most recently modified session files under `${CODEX_HOME:-~/.codex}/sessions`; no extra setup is needed. Context comes from the most recently updated session with usage data, not necessarily the focused one. Values become stale five minutes after that event, and missing values appear as `—`. Only usage and reset data are displayed; the session files themselves can contain conversation content.
 

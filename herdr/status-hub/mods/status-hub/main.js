@@ -103,6 +103,11 @@ export default class ClaudeUsage extends View {
         this.refresh(cx);
         cx.notify();
       })).child(symbol);
+    const rule = () => div().flex_1().h(1).bg(t.border);
+    const section = label => h_flex().pt(8).pb(2).gap(8).items_center()
+      .child(rule())
+      .child(div().text_color(t.muted).text_size(10).font_weight(600).child(label))
+      .child(rule());
     const docker = this.page === "Docker";
     const groups = new Map();
     for (const container of this.containers ?? []) {
@@ -116,14 +121,17 @@ export default class ClaudeUsage extends View {
         .child(arrow(-1, "‹"))
         .child(div().text_color(t.foreground).child(!docker && stale ? `${this.page} · stale` : this.page))
         .child(arrow(1, "›")))
-      .when(!docker, el => el.child(bar("Context", data?.context))
+      .when(this.page === "Claude Code", el => el.child(section("OUTPUT STYLE"))
+        .child(div().h(22).flex().items_center().truncate().text_color(t.foreground)
+          .child(typeof data?.output_style === "string" && data.output_style ? data.output_style : "—")))
+      .when(!docker, el => el.child(section("USAGE")).child(bar("Context", data?.context))
         .child(bar("5 hours", data?.five_hour, data?.five_hour_reset))
         .child(bar("7 days", data?.seven_day, data?.seven_day_reset)))
       .when(docker, el => el.child(this.dockerError ? div().p(8).text_color(t.muted).child("Docker unavailable") :
         this.containers ? v_flex().id("docker-list").flex_1().min_h(0).overflow_y_scrollbar()
           .when(!this.containers.length, el => el.child(div().p(8).text_color(t.muted).child("No containers")))
-          .children([...groups].map(([project, containers]) => v_flex().flex_none().gap(5).pt(8)
-            .child(div().text_color(t.muted).text_size(10).child(project ? `COMPOSE · ${project}` : "STANDALONE"))
+          .children([...groups].map(([project, containers]) => v_flex().flex_none().gap(5)
+            .child(section(project ? `COMPOSE · ${project}` : "STANDALONE"))
             .child(h_flex().flex_wrap().gap(6).children(containers.map(container =>
               v_flex().w(140).p(8).gap(4).rounded(6).bg(t.raised)
                 .child(div().truncate().text_color(t.foreground).child(container.name))

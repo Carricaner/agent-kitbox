@@ -4,7 +4,7 @@ A compact Herdr panel that switches between Claude Code and Codex usage and Dock
 
 ## What you see
 
-A theme-colored, bordered panel below the Files or Changes area. Its centered heading has a left and right arrow. Claude Code shows three labeled green segmented bars and green countdown badges. Codex shows the same usage bars and countdowns in blue. Docker shows small cards grouped by Compose project, with the container name, status text and a colored dot. The Docker list scrolls.
+A theme-colored, bordered panel below the Files or Changes area. Its centered heading has a left and right arrow. Claude Code shows an Output Style section with the current style name, then a Usage section with three labeled green segmented bars and green countdown badges. Codex shows the same usage bars and countdowns in blue. Docker shows small cards grouped by Compose project, with the container name, status text and a colored dot. The Docker list scrolls. Every category heading on every page, including Docker's project groups and any future page, uses one shared style: a centered, semibold, muted uppercase label with a thin border-colored line on each side.
 
 ## How it behaves
 
@@ -12,7 +12,7 @@ The Status Hub button toggles the panel and opens the right sidebar when needed.
 
 ## Built from
 
-Create `mods/status-hub/main.js`, `mod.json`, `capture.sh`, and `codex-usage.py`. The layout places one mod copy in the right panel and another with `props: {toggle: true}` in the tab row. The status-line wrapper forwards input to the existing Claude status-line program and saves only usage percentages, reset timestamps, and update time to the Herdr app home. The Codex page reads token-count events from recent local Codex session files. The mod uses Herdr's file, layout, theme and command APIs and runs `docker ps -a` to read local container metadata. It requires Bash, jq, Python 3 and Docker for their respective features.
+Create `mods/status-hub/main.js`, `mod.json`, `capture.sh`, and `codex-usage.py`. The layout places one mod copy in the right panel and another with `props: {toggle: true}` in the tab row. The status-line wrapper forwards input to the existing Claude status-line program and saves only usage percentages, reset timestamps, the output style name, and update time to the Herdr app home. The Codex page reads token-count events from recent local Codex session files. The mod uses Herdr's file, layout, theme and command APIs and runs `docker ps -a` to read local container metadata. It requires Bash, jq, Python 3 and Docker for their respective features.
 
 ## Watch out
 
