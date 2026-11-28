@@ -164,12 +164,13 @@ export default class ClaudeUsage extends View {
           const scale = i < Math.floor(percent / 10) && !stale ? 1 : 0.3;
           const start = blue ? [48, 96, 160] : [75, 128, 48], end = blue ? [96, 180, 255] : [150, 255, 96];
           const color = start.map((v, c) => Math.round((v + (end[c] - v) * i / 9) * scale).toString(16).padStart(2, "0")).join("");
-          // On a flash each segment's white frame lights in turn, then a background-colored frame covers it.
-          const phase = this.flashes?.[name]?.phase, on = phase === "on", delay = on ? lightAt(i, 10) : 0;
-          const frame = (id, color, duration) => div().id(`flash-${name}-${i}${id}`).absolute().top(-1).left(-1).w(16).h(12)
-            .rounded(3).border_1().border_color(color).opacity(on ? 1 : 0).transition("opacity", { duration: on ? duration : 1, delay });
-          return div().relative().w(14).h(10).rounded(2).bg(`#${color}`)
-            .when(Boolean(phase), el => el.child(frame("", "#ffffff", 1)).child(frame("-tail", t.background, TAIL)));
+          // On a flash the white frames light in turn, three at a time: when segment i + 3 lights,
+          // a background-colored frame covers segment i.
+          const phase = this.flashes?.[name]?.phase, on = phase === "on";
+          const frame = (id, color, at) => div().id(`flash-${name}-${i}${id}`).absolute().top(-1).left(-1).w(16).h(12)
+            .rounded(3).border_1().border_color(color).opacity(on ? 1 : 0).transition("opacity", { duration: 1, delay: on ? at : 0 });
+          return div().relative().w(14).h(10).rounded(2).bg(`#${color}`).when(Boolean(phase), el => el
+            .child(frame("", "#ffffff", lightAt(i, 10))).child(frame("-off", t.background, lightAt(i + 3, 10))));
         })))
         .child(div().w(32).text_color(t.foreground).child(valid ? `${Math.round(percent)}%` : "—"))
         .when(Boolean(remaining), el => el.child(div().px(5).py(1).rounded(5).bg(blue ? "#263e59" : "#34452d").text_size(10)
