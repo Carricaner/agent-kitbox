@@ -1,10 +1,15 @@
 # Markdown viewer for Herdr
 
-View a Markdown file as source, formatted text, or both side by side or stacked. Edit local files in Source mode and click Save. The preview follows your edits. The viewer checks for external changes every two seconds when there are no unsaved edits. If the file changed elsewhere, saving fails without overwriting it; copy your edits before reopening the file. Remote files are read-only.
+## What it does
 
-## Install and update
+- Four views: source, formatted preview, side by side, or top and bottom.
+- Edit local files in Source, then click Save.
+- The preview follows your edits.
+- With no unsaved edits, it checks the file for outside changes every two seconds.
+- If the file changed somewhere else, Save fails and nothing is overwritten. Copy your edits, then reopen the file.
+- Remote files are read-only.
 
-Clone the repository, then copy the mod into Herdr's configuration folder:
+## Install
 
 ```sh
 git clone https://github.com/Carricaner/agent-kitbox.git
@@ -14,15 +19,23 @@ cp herdr/markdown-viewer/mods/markdown-viewer/{main.js,mod.json,VERSION} "${HERD
 herdr-app check "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer"
 ```
 
-To update, run `git pull` in the cloned repository and repeat the `cp` and `herdr-app check` commands. This replaces the installed mod's code; back up any personal modifications first. Herdr reloads the mod after files are saved, so save any open edits before updating.
+## Update
 
-Check the installed version with:
+1. Back up any changes you made to the installed mod.
+2. Save any open edits. Herdr reloads the mod when its files change.
+3. Run `git pull` in the cloned repository.
+4. Run the `cp` and `herdr-app check` commands again.
+
+## Check the version
 
 ```sh
 cat "${HERDR_APP_HOME:-$HOME/.config/herdr-app}/mods/markdown-viewer/VERSION"
 ```
 
-See the repository's [changelog](../../CHANGELOG.md) for release notes. The version file identifies the copied release; it does not check for updates or detect later local edits.
+- This shows the version you copied. It does not check for updates or notice your own edits.
+- Release notes: [changelog](../../CHANGELOG.md).
+
+## Open a file
 
 Open a file beside the focused terminal:
 
@@ -30,4 +43,4 @@ Open a file beside the focused terminal:
 herdr-app do pane.split '{"direction":"right","mod":"markdown-viewer","props":{"file":"/absolute/path/to/file.md"}}'
 ```
 
-The Files panel must be configured separately to open Markdown files in this viewer.
+To open Markdown files from the Files panel, set up the Files panel separately.

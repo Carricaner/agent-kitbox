@@ -2,5 +2,7 @@
 
 ## 0.1.0 — 2026-11-16
 
-- Initial published version: Markdown preview, local source editing and explicit save.
-- Side-by-side and stacked views, automatic refresh, and protection against overwriting external changes.
+- First release.
+- Markdown preview, local editing, and Save.
+- Side-by-side and top-and-bottom views.
+- Refreshes on its own and never overwrites outside changes.

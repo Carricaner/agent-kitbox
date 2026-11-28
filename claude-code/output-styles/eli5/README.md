@@ -1,20 +1,31 @@
 # ELI5 output style for Claude Code
 
-ELI5 asks Claude to use simple words and short sentences, default to Traditional Chinese, and end each response with what it did, whether it worked, and the next step. Code, comments, and commit messages remain in English. It also asks Claude to explain meaningful risks and report unverified results honestly.
+Makes Claude explain things simply.
+
+## What it does
+
+- Uses simple words and short sentences.
+- Answers in Traditional Chinese, unless you write in another language.
+- Keeps code, code comments and commit messages in English.
+- Ends every answer with three parts: what it did, whether it worked, and your next step.
+- Still warns you about real risks, and never claims success it did not check.
 
 ## Install
 
-Copy `eli5.md` to `~/.claude/output-styles/eli5.md`. Check and back up any existing file at that path before replacing it:
+1. If `~/.claude/output-styles/eli5.md` already exists, check it and back it up.
+2. Copy the file:
 
-```sh
-mkdir -p ~/.claude/output-styles
-cp claude-code/output-styles/eli5/eli5.md ~/.claude/output-styles/eli5.md
-```
+   ```sh
+   mkdir -p ~/.claude/output-styles
+   cp claude-code/output-styles/eli5/eli5.md ~/.claude/output-styles/eli5.md
+   ```
 
-Start or restart Claude Code, then select ELI5 with `/output-style` (or `/config` → Output style). In the desktop app, set `"outputStyle": "ELI5"` in the appropriate Claude Code settings file. See the [Claude Code output styles documentation](https://code.claude.com/docs/en/output-styles) for settings and scope.
+3. Start or restart Claude Code.
+4. Pick ELI5:
+   - Terminal: run `/output-style`, or `/config` → Output style.
+   - Desktop app: set `"outputStyle": "ELI5"` in your Claude Code settings file.
 
-This style defaults to Traditional Chinese unless the user writes in another language. It follows the original configuration and does not set `keep-coding-instructions`; see the official documentation for how that affects Claude Code's built-in software engineering instructions.
+## Notes
 
-## Version
-
-See [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md).
+- It does not set `keep-coding-instructions`. See the [output styles docs](https://code.claude.com/docs/en/output-styles) for what that changes.
+- Version: [VERSION](VERSION). Release notes: [CHANGELOG.md](CHANGELOG.md).
