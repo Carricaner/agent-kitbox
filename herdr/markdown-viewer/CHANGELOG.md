@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-29
 
 - In git, Preview marks changes since the last commit like an IDE gutter: green bar for new, blue for changed, red mark where lines were deleted. The toolbar shows `+added −removed`.
 - Reload button: after a failed save, drop your edits and load the file again. It asks once first.

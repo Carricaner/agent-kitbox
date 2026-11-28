@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 — 2026-11-29
+
+- The usage bar animation now looks like a short moving light: at most three segment frames are lit at once. When a new frame lights, the oldest of the three goes dark.
+- Simpler, bullet-point README with the screenshot and animation shown one above the other.
+
 ## 0.4.0 — 2026-11-24
 
 - Usage bars animate when their lit segment count changes: each segment's white frame lights in turn, then fades.
