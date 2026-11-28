@@ -26,6 +26,7 @@ A small Herdr panel with pages for Claude Code usage, Codex usage and Docker con
   - A tile's value changes: a white line, about a quarter of the edge long, runs once clockwise along the 1px edge. Bright head, tail fading into the tile's gray.
   - Both share one motion: 0.5 seconds, slow first, then fast.
   - Built with native opacity transitions. Percentage position transitions do not animate.
+  - To hide a lit bar frame, fade its wrapper (opacities multiply). Never paint a background-colored copy over it: at fractional zoom the antialiased edges show through.
   - First loads, missing values and page or session switches never animate.
 - Docker refreshes every five seconds while its page is selected, even when the panel is hidden.
 - A down daemon or an empty list shows a message.

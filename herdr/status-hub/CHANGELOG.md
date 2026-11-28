@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Fix the usage bar animation leaving faint gray edges on segments after the light passed (seen at window zoom other than 100%).
+- New README animation showing the three-segment light.
+
 ## 0.4.1 — 2026-11-29
 
 - The usage bar animation now looks like a short moving light: at most three segment frames are lit at once. When a new frame lights, the oldest of the three goes dark.
