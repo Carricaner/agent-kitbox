@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 — 2026-11-29
 
 - Fix the usage bar animation leaving faint gray edges on segments after the light passed (seen at window zoom other than 100%).
 - New README animation showing the three-segment light.
